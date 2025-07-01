@@ -1,0 +1,14 @@
+app:
+  name: auto-kicker-bot
+  services:
+    - name: worker
+      type: worker
+      git:
+        branch: main
+        build_command: pip install -r requirements.txt
+        run_command: python app.py
+      instance_type: nano
+      env:
+        - key: BOT_TOKEN
+        - key: API_ID  
+        - key: API_HASH

@@ -1,0 +1,28 @@
+{
+  "name": "Auto-Kicker Bot",
+  "description": "Telegram bot that automatically bans users who leave a channel",
+  "repository": "https://github.com/saikatwtf/Auto-kicker",
+  "logo": "https://telegra.ph/file/4d8c8b8b8b8b8b8b8b8b8.png",
+  "keywords": ["telegram", "bot", "pyrogram", "auto-ban"],
+  "stack": "heroku-22",
+  "env": {
+    "BOT_TOKEN": {
+      "description": "Get from @BotFather",
+      "required": true
+    },
+    "API_ID": {
+      "description": "Get from my.telegram.org",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Get from my.telegram.org",
+      "required": true
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "eco"
+    }
+  }
+}
