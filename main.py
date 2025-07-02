@@ -57,48 +57,41 @@ Powered by @AnnihilusOP
 """
     await message.reply_text(help_text)
 
-@app.on_chat_member_updated()
-async def handle_member_update(client, chat_member_updated: ChatMemberUpdated):
+@app.on_message(filters.left_chat_member)
+async def handle_left_member(client, message):
     try:
-        # Check if someone left the chat
-        if (chat_member_updated.old_chat_member and 
-            chat_member_updated.old_chat_member.status in ["member", "administrator", "creator"] and
-            chat_member_updated.new_chat_member.status == "left"):
+        left_user = message.left_chat_member
+        
+        # Skip if user is bot
+        if left_user.is_bot:
+            return
             
-            user = chat_member_updated.new_chat_member.user
-            chat = chat_member_updated.chat
+        try:
+            # Ban the user who left
+            await client.ban_chat_member(message.chat.id, left_user.id)
+            logger.info(f"Banned user {left_user.first_name} (@{left_user.username or 'N/A'}) [ID: {left_user.id}] from {message.chat.title}")
             
-            # Skip if user is bot or if it's the same bot
-            if user.is_bot:
-                return
-                
+        except ChatAdminRequired:
+            logger.warning(f"Bot is not admin in {message.chat.title}. Cannot ban users.")
             try:
-                # Ban the user who left
-                await client.ban_chat_member(chat.id, user.id)
-                logger.info(f"Banned user {user.first_name} (@{user.username or 'N/A'}) [ID: {user.id}] from {chat.title}")
+                await message.reply_text(
+                    "⚠️ I need admin rights with 'Ban Users' permission to function properly!\n\nPowered by @AnnihilusOP"
+                )
+            except:
+                pass
                 
-            except ChatAdminRequired:
-                logger.warning(f"Bot is not admin in {chat.title}. Cannot ban users.")
-                try:
-                    await client.send_message(
-                        chat.id, 
-                        "⚠️ I need admin rights with 'Ban Users' permission to function properly!\n\nPowered by @AnnihilusOP"
-                    )
-                except:
-                    pass
-                    
-            except UserAdminInvalid:
-                logger.warning(f"Cannot ban admin user {user.first_name} in {chat.title}")
-                
-            except FloodWait as e:
-                logger.warning(f"Rate limited. Waiting {e.value} seconds")
-                await asyncio.sleep(e.value)
-                
-            except Exception as e:
-                logger.error(f"Error banning user {user.id}: {str(e)}")
-                
+        except UserAdminInvalid:
+            logger.warning(f"Cannot ban admin user {left_user.first_name} in {message.chat.title}")
+            
+        except FloodWait as e:
+            logger.warning(f"Rate limited. Waiting {e.value} seconds")
+            await asyncio.sleep(e.value)
+            
+        except Exception as e:
+            logger.error(f"Error banning user {left_user.id}: {str(e)}")
+            
     except Exception as e:
-        logger.error(f"Error in member update handler: {str(e)}")
+        logger.error(f"Error in left member handler: {str(e)}")
 
 @app.on_message(filters.new_chat_members)
 async def bot_added_to_group(client, message):
@@ -130,19 +123,7 @@ async def bot_added_to_group(client, message):
                     "⚠️ Please make me admin with 'Ban Users' permission.\n\nPowered by @AnnihilusOP"
                 )
 
-async def main():
-    logger.info("Starting Auto-Kicker Bot...")
-    await app.start()
-    logger.info("Bot started successfully!")
-    
-    # Keep the bot running
-    try:
-        while True:
-            await asyncio.sleep(1)
-    except KeyboardInterrupt:
-        logger.info("Bot stopped")
-    finally:
-        await app.stop()
-
 if __name__ == "__main__":
-    asyncio.run(main())
+    logger.info("Starting Auto-Kicker Bot...")
+    app.run()
+
