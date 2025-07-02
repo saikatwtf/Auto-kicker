@@ -71,27 +71,37 @@ async def handle_left_member(client, message):
             await client.ban_chat_member(message.chat.id, left_user.id)
             logger.info(f"Banned user {left_user.first_name} (@{left_user.username or 'N/A'}) [ID: {left_user.id}] from {message.chat.title}")
             
-        except ChatAdminRequired:
-            logger.warning(f"Bot is not admin in {message.chat.title}. Cannot ban users.")
-            try:
-                await message.reply_text(
-                    "⚠️ I need admin rights with 'Ban Users' permission to function properly!\n\nPowered by @AnnihilusOP"
-                )
-            except:
-                pass
-                
-        except UserAdminInvalid:
-            logger.warning(f"Cannot ban admin user {left_user.first_name} in {message.chat.title}")
-            
-        except FloodWait as e:
-            logger.warning(f"Rate limited. Waiting {e.value} seconds")
-            await asyncio.sleep(e.value)
-            
         except Exception as e:
             logger.error(f"Error banning user {left_user.id}: {str(e)}")
             
     except Exception as e:
         logger.error(f"Error in left member handler: {str(e)}")
+
+@app.on_chat_member_updated()
+async def handle_member_update(client, chat_member_updated: ChatMemberUpdated):
+    try:
+        # Check if someone left the chat
+        if (chat_member_updated.old_chat_member and 
+            chat_member_updated.old_chat_member.status in ["member", "administrator"] and
+            chat_member_updated.new_chat_member.status == "left"):
+            
+            user = chat_member_updated.new_chat_member.user
+            chat = chat_member_updated.chat
+            
+            # Skip if user is bot
+            if user.is_bot:
+                return
+                
+            try:
+                # Ban the user who left
+                await client.ban_chat_member(chat.id, user.id)
+                logger.info(f"Banned user {user.first_name} (@{user.username or 'N/A'}) [ID: {user.id}] from {chat.title}")
+                
+            except Exception as e:
+                logger.error(f"Error banning user {user.id}: {str(e)}")
+                
+    except Exception as e:
+        logger.error(f"Error in member update handler: {str(e)}")
 
 @app.on_message(filters.new_chat_members)
 async def bot_added_to_group(client, message):
