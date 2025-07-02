@@ -132,9 +132,17 @@ async def bot_added_to_group(client, message):
 
 async def main():
     logger.info("Starting Auto-Kicker Bot...")
-    async with app:
-        logger.info("Bot started successfully!")
-        await asyncio.Event().wait()
+    await app.start()
+    logger.info("Bot started successfully!")
+    
+    # Keep the bot running
+    try:
+        while True:
+            await asyncio.sleep(1)
+    except KeyboardInterrupt:
+        logger.info("Bot stopped")
+    finally:
+        await app.stop()
 
 if __name__ == "__main__":
     asyncio.run(main())
